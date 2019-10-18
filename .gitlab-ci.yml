@@ -96,17 +96,16 @@ Coverity:
        - master
        - coverity
   script:
-  - curl -o /tmp/cov-analysis-linux64.tgz https://scan.coverity.com/download/linux64
-    --form project="$COVERITY_SCAN_PROJECT_NAME" --form token=$COVERITY_SCAN_TOKEN
-  - tar xfz /tmp/cov-analysis-linux64.tgz
+  - wget https://scan.coverity.com/download/linux64 --post-data "token=$COVERITY_SCAN_TOKEN&project=$COVERITY_SCAN_PROJECT_NAME" -O /tmp/coverity_tool.tgz
+  - tar xfz /tmp/coverity_tool.tgz
   - git submodule update --init && autoreconf -fvi
   - CFLAGS="-g -O0" ./configure --disable-maintainer-mode --without-docker-tests --with-werror
-  - cov-analysis-linux64-*/bin/cov-build --dir cov-int make -j4
+  - cov-analysis-linux64-*/bin/cov-build --dir cov-int make -j$(nproc)
   - tar cfz cov-int.tar.gz cov-int
-  - curl https://scan.coverity.com/builds?project="$COVERITY_SCAN_PROJECT_NAME"
+  - curl https://scan.coverity.com/builds?project=$COVERITY_SCAN_PROJECT_NAME
     --form token=$COVERITY_SCAN_TOKEN --form email=n.mavrogiannopoulos@gmail.com
     --form file=@cov-int.tar.gz --form version="`git describe --tags`"
-    --form description="`git describe --tags` / $CI_COMMIT_TITLE / $CI_COMMIT_REF_NAME:$CI_PIPELINE_ID "
+    --form description="CI build"
   tags:
   - shared
   except:
