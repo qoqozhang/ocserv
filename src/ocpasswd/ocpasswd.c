@@ -362,6 +362,7 @@ unlock_user(const char *fpasswd, const char *username)
 static const struct option long_options[] = {
 	{"passwd", 1, 0, 'c'},
 	{"groupname", 1, 0, 'g'},
+	{"password", 1, 0, 'p'},
 	{"delete", 0, 0, 'd'},
 	{"lock", 0, 0, 'l'},
 	{"unlock", 0, 0, 'u'},
@@ -378,6 +379,7 @@ void usage(void)
 	fprintf(stderr, "\n");
 	fprintf(stderr, "   -c, --passwd=file          Password file\n");
 	fprintf(stderr, "   -g, --groupname=str        User's group name\n");
+	fprintf(stderr, "   -g, --password=str         User's password");
 	fprintf(stderr, "   -d, --delete               Delete user\n");
 	fprintf(stderr, "   -l, --lock                 Lock user\n");
 	fprintf(stderr, "   -u, --unlock               Unlock user\n");
@@ -424,7 +426,7 @@ int main(int argc, char **argv)
 	umask(066);
 
 	while (1) {
-		c = getopt_long(argc, argv, "c:g:dluvh", long_options, NULL);
+		c = getopt_long(argc, argv, "c:g:p:dluvh", long_options, NULL);
 		if (c == -1)
 			break;
 
@@ -443,6 +445,13 @@ int main(int argc, char **argv)
 				}
 				groupname = strdup(optarg);
 				break;
+			case 'p':
+				if (passwd) {
+					fprintf(stderr, "-p option cannot be specified multiple time\n");
+					exit(1);
+				}
+				passwd = strdup(optarg);
+				break;				
 			case 'd':
 				if (flags) {
 					usage();
@@ -492,41 +501,6 @@ int main(int argc, char **argv)
 	} else if (flags & FLAG_DELETE) {
 		delete_user(fpasswd, username);
 	} else { /* set password */
-
-		if (isatty(STDIN_FILENO)) {
-			char* p2;
-
-			passwd = getpass("Enter password: ");
-			if (passwd == NULL) {
-				fprintf(stderr, "Please specify a password\n");
-				exit(1);
-			}
-
-
-			p2 = strdup(passwd);
-			passwd = getpass("Re-enter password: ");
-			if (passwd == NULL) {
-				fprintf(stderr, "Please specify a password\n");
-				exit(1);
-			}
-
-			if (p2 == NULL || strcmp(passwd, p2) != 0) {
-				fprintf(stderr, "Passwords do not match\n");
-				exit(1);
-			}
-			free(p2);
-		} else {
-			passwd = NULL;
-			l = getline(&passwd, &i, stdin);
-			if (l <= 1) {
-				fprintf(stderr, "Please specify a password\n");
-				exit(1);
-			}
-
-			free_passwd = 1;
-			if (passwd[l-1] == '\n')
-				passwd[l-1] = 0;
-		}
 
 		crypt_int(fpasswd, username, groupname, passwd);
 		if (free_passwd)

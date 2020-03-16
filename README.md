@@ -141,3 +141,6 @@ container registry. The compilation/test phase is on every commit to project.
 
 Please see the [technical description page](http://ocserv.gitlab.io/www/technical.html).
 
+# 更新2020-03-16
+
+ocpasswd 不在基于官方版本的交互式创建和修改用户密码,使用参数-p指定密码.便于其他应用调用使用.
